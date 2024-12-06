@@ -16,6 +16,8 @@ import requests
 
 
 class AsanaAPI:
+    BASE_URL = "https://app.asana.com/api/1.0"
+
     def __init__(self, token):
         self.headers = {
             "accept": "application/json",
@@ -24,18 +26,49 @@ class AsanaAPI:
         }
 
     def fetch_workspaces(self):
-        response = requests.get("https://app.asana.com/api/1.0/workspaces", headers=self.headers)
+        """
+        Fetches the list of workspaces available in the Asana account.
+
+        Returns:
+            dict: JSON response containing workspaces data, or None if an error occurs.
+        """
+        response = requests.get(f"{self.BASE_URL}/workspaces", headers=self.headers)
         return response.json()
 
     def fetch_users(self):
-        response = requests.get("https://app.asana.com/api/1.0/users", headers=self.headers)
+        """
+        Fetches the list of users available in the Asana account.
+
+        Returns:
+            dict: JSON response containing users data, or None if an error occurs.
+        """
+        response = requests.get(f"{self.BASE_URL}/users", headers=self.headers)
         return response.json()
 
     def fetch_projects(self):
-        response = requests.get("https://app.asana.com/api/1.0/projects", headers=self.headers)
+        """
+        Fetches the list of projects available in the Asana account.
+
+        Returns:
+            dict: JSON response containing projects data, or None if an error occurs.
+        """
+        response = requests.get(f"{self.BASE_URL}/projects", headers=self.headers)
         return response.json()
 
     def create_task(self, subject, notes, assignee_user_gid, project_gid, workspace_gid):
+        """
+        Creates a new task in the Asana account.
+
+        Args:
+            subject (str): Subject of the task.
+            notes (str): Notes of the task.
+            assignee_user_gid (str): GID of the user to assign the task to.
+            project_gid (str): GID of the project to add the task to.
+            workspace_gid (str): GID of the workspace of the project.
+
+        Returns:
+            requests.Response: Response from the API.
+        """
         gid = str(uuid.uuid4())
         task_data = {
             "data": {
@@ -55,5 +88,5 @@ class AsanaAPI:
                 "workspace": workspace_gid
             }
         }
-        response = requests.post("https://app.asana.com/api/1.0/tasks", headers=self.headers, json=task_data)
+        response = requests.post(f"{self.BASE_URL}/tasks", headers=self.headers, json=task_data)
         return response
