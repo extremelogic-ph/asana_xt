@@ -14,6 +14,7 @@
 import os
 import argparse
 import json
+import re
 from asana_xt.api import AsanaAPI
 
 
@@ -75,6 +76,8 @@ def create_ticket(project_name, assignee_name, subject, notes):
 
     project_gid = project_details["gid"]
 
+    notes = assign_mentions(notes, asana_api)
+
     # Create a task
     response = asana_api.create_task(
         subject=subject,
@@ -84,6 +87,50 @@ def create_ticket(project_name, assignee_name, subject, notes):
         workspace_gid=workspace_gid
     )
     return response.text
+
+
+def assign_mentions(content, asana_api):
+    """
+    Processes mentions in the format @[Name] and replaces them with Asana-style user mentions.
+
+    Args:
+        content (str): The string containing @[Name] placeholders.
+        asana_api (object): An object representing the Asana API, which provides a `fetch_users()` method.
+
+    Returns:
+        str: The content string with @[Name] placeholders replaced by Asana-style mentions.
+    """
+    # Define a regex pattern to match @[Name] placeholders
+    pattern = r"@\[([^\]]+)\]"
+
+    # Find all mentions in the content
+    names = re.findall(pattern, content)
+    print(f"User names found: {names}")
+
+    # Iterate over each extracted name
+    for name in names:
+        # Fetch user details using the Asana API
+        user_details = next(
+            (user for user in asana_api.fetch_users()["data"] if user["name"] == name),
+            None
+        )
+        print(f"User details for '{name}': {user_details}")
+
+        # If the user exists, replace the placeholder with the Asana mention format
+        if user_details:
+            user_gid = user_details["gid"]
+            # Create the Asana-style HTML mention format
+            mention_html = (
+                f"<a data-asana-gid=\"{user_gid}\" "
+                f"data-asana-accessible=\"true\" "
+                f"data-asana-type=\"user\" "
+                f"data-asana-dynamic=\"true\">@{name}</a>"
+            )
+            content = content.replace(f"@[{name}]", mention_html)
+        else:
+            print(f"Warning: User '{name}' not found in Asana.")
+
+    return content
 
 
 def main():
